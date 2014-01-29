@@ -351,8 +351,13 @@ static NSString *RKMIMETypeFromAFHTTPClientParameterEncoding(AFHTTPClientParamet
         request = [self.HTTPClient requestWithMethod:method path:path parameters:nil];
 		
         NSError *error = nil;
-        NSString *charset = (__bridge NSString *)CFStringConvertEncodingToIANACharSetName(CFStringConvertNSStringEncodingToEncoding(self.HTTPClient.stringEncoding));
-        [request setValue:[NSString stringWithFormat:@"%@; charset=%@", self.requestSerializationMIMEType, charset] forHTTPHeaderField:@"Content-Type"];
+        //////////////////////////////////////////////////////////////
+        // TODO: Hack, think on a better/cleaner solution
+//        NSString *charset = (__bridge NSString *)CFStringConvertEncodingToIANACharSetName(CFStringConvertNSStringEncodingToEncoding(self.HTTPClient.stringEncoding));
+//        [request setValue:[NSString stringWithFormat:@"%@; charset=%@", self.requestSerializationMIMEType, charset] forHTTPHeaderField:@"Content-Type"];
+        [request setValue:self.requestSerializationMIMEType forHTTPHeaderField:@"Content-Type"];
+        //////////////////////////////////////////////////////////////
+
         NSData *requestBody = [RKMIMETypeSerialization dataFromObject:parameters MIMEType:self.requestSerializationMIMEType error:&error];
         [request setHTTPBody:requestBody];
 	} else {
@@ -361,6 +366,41 @@ static NSString *RKMIMETypeFromAFHTTPClientParameterEncoding(AFHTTPClientParamet
 
 	return request;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// TODO: Think on a better/cleaner solution.
+- (NSMutableURLRequest *)postRequestWithPath:(NSString *)path
+                                  parameters:(NSDictionary *)parameters
+                            objectParameters:(NSDictionary *)objectParameters
+{
+    NSMutableURLRequest* request;
+    NSError *error = nil;
+
+    request = [self.HTTPClient requestWithMethod:RKStringFromRequestMethod(RKRequestMethodGET) path:path parameters:parameters];
+    [request setHTTPMethod:RKStringFromRequestMethod(RKRequestMethodPOST)];
+    [request setValue:self.requestSerializationMIMEType forHTTPHeaderField:@"Content-Type"];
+    NSData *requestBody = [RKMIMETypeSerialization dataFromObject:objectParameters MIMEType:self.requestSerializationMIMEType error:&error];
+    [request setHTTPBody:requestBody];
+
+	return request;
+}
+
+- (NSMutableURLRequest *)putRequestWithPath:(NSString *)path
+                                 parameters:(NSDictionary *)parameters
+                           objectParameters:(NSDictionary *)objectParameters
+{
+    NSMutableURLRequest* request;
+    NSError *error = nil;
+
+    request = [self.HTTPClient requestWithMethod:RKStringFromRequestMethod(RKRequestMethodGET) path:path parameters:parameters];
+    [request setHTTPMethod:RKStringFromRequestMethod(RKRequestMethodPUT)];
+    [request setValue:self.requestSerializationMIMEType forHTTPHeaderField:@"Content-Type"];
+    NSData *requestBody = [RKMIMETypeSerialization dataFromObject:objectParameters MIMEType:self.requestSerializationMIMEType error:&error];
+    [request setHTTPBody:requestBody];
+
+	return request;
+}
+////////////////////////////////////////////////////////////////////////////////////////////////
 
 - (NSMutableURLRequest *)requestWithPathForRouteNamed:(NSString *)routeName
                                                object:(id)object
@@ -418,6 +458,19 @@ static NSString *RKMIMETypeFromAFHTTPClientParameterEncoding(AFHTTPClientParamet
                                 parameters:(NSDictionary *)parameters;
 {
     NSString *requestPath = (path) ? path : [[self.router URLForObject:object method:method] relativeString];
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // TODO: Think on a better/cleaner solution.
+    if (method==RKRequestMethodPOST && parameters)
+    {
+        return [self postRequestWithPath:requestPath parameters:parameters objectParameters:[self mergedParametersWithObject:object method:RKRequestMethodPOST parameters:nil]];
+    }
+    else if(method==RKRequestMethodPUT && parameters)
+    {
+        return [self putRequestWithPath:requestPath parameters:parameters objectParameters:[self mergedParametersWithObject:object method:RKRequestMethodPOST parameters:nil]];
+    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
     id requestParameters = [self mergedParametersWithObject:object method:method parameters:parameters];
     return [self requestWithMethod:RKStringFromRequestMethod(method) path:requestPath parameters:requestParameters];
 }

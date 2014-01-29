@@ -213,6 +213,14 @@ static dispatch_queue_t RKResponseMapperSerializationQueue() {
 
     BOOL isClientError = NSLocationInRange(self.response.statusCode, RKStatusCodeRangeForClass(RKStatusCodeClassClientError));
 
+    //////////////////////////////// Modified to support server error. ////////////////////////////////
+    // TODO: Hack, think on a better/cleaner solution
+    if (self.response.statusCode == 500)
+    {
+        isClientError = YES;
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    
     // If we are an error response and empty, we emit an error that the content is unmappable
     if (isClientError && [self hasEmptyResponse]) {
         self.error = RKUnprocessableClientErrorFromResponse(self.response);

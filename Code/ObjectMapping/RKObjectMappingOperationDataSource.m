@@ -19,12 +19,46 @@
 //
 
 #import "RKObjectMappingOperationDataSource.h"
-#import "RKObjectMapping.h"
+#import "../../../Social/WebService/BCWebServiceManager.h"
 
 @implementation RKObjectMappingOperationDataSource
 
 - (id)mappingOperation:(RKMappingOperation *)mappingOperation targetObjectForRepresentation:(NSDictionary *)representation withMapping:(RKObjectMapping *)mapping
 {
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // TODO: Think on a better/cleaner solution.
+    //    if ([representation respondsToSelector:@selector(objectForKey:)] && [representation objectForKey:@"__type"])
+    //    {
+    //        return [[BCWebServiceManager sharedInstance] objectForType:[representation objectForKey:@"__type"]];
+    //    }
+
+    // TODO: Cleanup/remove.
+    if ([representation respondsToSelector:@selector(objectForKey:)] && [representation objectForKey:@"$type"])
+    {
+        NSString *entity = [representation objectForKey:@"$type"];
+        NSArray *components = [entity componentsSeparatedByString:@","];
+        if ([components count]>0)
+        {
+            entity = [components objectAtIndex:0];
+        }
+        components = [entity componentsSeparatedByString:@"."];
+        if ([components count]>0)
+        {
+            entity = [components lastObject];
+        }
+
+        BCWebServiceManager *sharedManager = [BCWebServiceManager sharedInstance];
+
+        if ([sharedManager customMappingEntity:entity])
+        {
+            id instance = [sharedManager classInstanceForEntity:entity];
+            if (instance) {
+                return instance;
+            }
+        }
+    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
     return [mapping.objectClass new];
 }
 

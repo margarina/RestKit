@@ -64,6 +64,11 @@ static NSIndexSet *RKObjectRequestOperationAcceptableStatusCodes()
         statusCodes = [NSMutableIndexSet indexSet];
         [statusCodes addIndexesInRange:RKStatusCodeRangeForClass(RKStatusCodeClassSuccessful)];
         [statusCodes addIndexesInRange:RKStatusCodeRangeForClass(RKStatusCodeClassClientError)];
+
+        /////////////////////////////////////// Additional acceptable status codes. ///////////////////////////////////////
+        // TODO: Hack, think on a better/cleaner solution
+        [statusCodes addIndexes:[NSIndexSet indexSetWithIndex:500]];
+        ///////////////////////////////////////////////////////////////////////////////////////////////////
     }
     return statusCodes;
 }

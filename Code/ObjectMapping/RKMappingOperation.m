@@ -30,6 +30,7 @@
 #import "RKDynamicMapping.h"
 #import "RKObjectUtilities.h"
 #import "RKValueTransformers.h"
+#import "../../../Social/WebService/BCWebServiceManager.h"
 
 // Set Logging Component
 #undef RKLogComponent
@@ -227,7 +228,58 @@ static BOOL RKObjectContainsValueForKeyPaths(id representation, NSArray *keyPath
     if (self) {
         self.sourceObject = sourceObject;
         self.destinationObject = destinationObject;
-        self.mapping = objectOrDynamicMapping;
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////
+        // TODO: Think on a better/cleaner solution.
+        //        if ([sourceObject respondsToSelector:@selector(objectForKey:)] && [sourceObject objectForKey:@"__type"])
+        //        {
+        //            //NSLog(@"FOUND TYPE: %@", [anObject valueForKey:@"__type"]);
+        //            BCWebServiceManager *sharedManager = [BCWebServiceManager sharedInstance];
+        //
+        //            self.mapping = [sharedManager mappingForType:[sourceObject valueForKey:@"__type"]];
+        //        }
+
+        // TODO: Cleanup/remove.
+        if ([sourceObject respondsToSelector:@selector(objectForKey:)] && [sourceObject objectForKey:@"$type"])
+        {
+            //NSLog(@"FOUND TYPE: %@", [anObject valueForKey:@"__type"]);
+            BCWebServiceManager *sharedManager = [BCWebServiceManager sharedInstance];
+            NSString *entity = [sourceObject valueForKey:@"$type"];
+            NSArray *components = [entity componentsSeparatedByString:@","];
+            if ([components count]>0)
+            {
+                entity = [components objectAtIndex:0];
+            }
+            components = [entity componentsSeparatedByString:@"."];
+            if ([components count]>0)
+            {
+                entity = [components lastObject];
+            }
+
+            if ([sharedManager customMappingEntity:entity])
+            {
+                RKMapping *mapping = [sharedManager mappingForEntity:entity];
+
+                if (mapping)
+                {
+                    self.mapping = mapping;
+                }
+                else
+                {
+                    self.mapping = objectOrDynamicMapping;
+                }
+            }
+            else
+            {
+                self.mapping = objectOrDynamicMapping;
+            }
+        }
+        ////////////////////////////////////////////////////////////////////////////////////////////////
+
+        else
+        {
+            self.mapping = objectOrDynamicMapping;
+        }
     }
 
     return self;
