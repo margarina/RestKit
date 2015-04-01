@@ -1,3 +1,5 @@
+source 'https://github.com/CocoaPods/Specs.git'
+
 inhibit_all_warnings!
 
 def import_pods
@@ -6,16 +8,16 @@ def import_pods
   pod 'RestKit/Search', :path => '.'
   
   pod 'Specta', '0.2.1'
-  pod 'OCMock', '2.2.1'
+  pod 'OCMock', '2.2.4'
   pod 'OCHamcrest', '3.0.1'
-  pod 'Expecta', '0.2.3'
+  pod 'Expecta', '0.3.1'
   
   # Used for testing Value Transformer integration
-  pod 'RKCLLocationValueTransformer', :git => 'https://github.com/RestKit/RKCLLocationValueTransformer'
+  pod 'RKCLLocationValueTransformer', '~> 1.1.0'
 end
 
 target :ios do
-  platform :ios, '5.0'
+  platform :ios, '5.1.1'
   link_with 'RestKitTests'
   import_pods
 end
